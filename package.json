@@ -17,6 +17,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/mapbox__polyline": "^1.0.5",
     "@types/node": "^20.19.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
