@@ -8,6 +8,8 @@ export type NormalizedReplayPoint = ReplaySample & {
   colorFuelRisk: string;
   colorGlycogenRemaining: string;
   colorHeartRate: string;
+  cumulativeGainM: number;
+  avgSpeedMps: number;
 };
 
 export type NormalizedReplayModel = {
@@ -77,7 +79,9 @@ export function getModeColor(point: NormalizedReplayPoint, mode: ReplayMode): st
 }
 
 export function normalizeReplayPayload(payload: ReplayPayload): NormalizedReplayModel {
-  const samples = ensureSamples(payload).sort((a, b) => a.elapsedS - b.elapsedS);
+  const pointsRaw = ensureSamples(payload);
+  // Do NOT sort by elapsedS as it's not unique at 10fps; order is already guaranteed by idx.
+  const samples = pointsRaw;
 
   const maxSpeed = Math.max(...samples.map((s) => s.speedMps ?? 0), 1);
   const grades = samples.map((s) => s.gradePct ?? 0);
@@ -96,11 +100,19 @@ export function normalizeReplayPayload(payload: ReplayPayload): NormalizedReplay
   let minLon = 180;
   let maxLon = -180;
 
+  let runningGain = 0;
+  let runningSpeedSum = 0;
   const points: NormalizedReplayPoint[] = samples.map((sample, idx) => {
     minLat = Math.min(minLat, sample.lat);
     maxLat = Math.max(maxLat, sample.lat);
     minLon = Math.min(minLon, sample.lon);
     maxLon = Math.max(maxLon, sample.lon);
+
+    if (idx > 0) {
+      const diff = sample.elevationM - samples[idx - 1].elevationM;
+      if (diff > 0) runningGain += diff;
+    }
+    runningSpeedSum += sample.speedMps;
 
     const speedT = clamp01((sample.speedMps ?? 0) / maxSpeed);
     const effortT = clamp01(sample.effortScore ?? 0);
@@ -117,6 +129,8 @@ export function normalizeReplayPayload(payload: ReplayPayload): NormalizedReplay
       ...sample,
       idx,
       progress: clamp01((sample.distanceM ?? idx) / maxDistance),
+      cumulativeGainM: Math.round(runningGain),
+      avgSpeedMps: runningSpeedSum / (idx + 1),
       colorSpeed: blend([
         [0, [14, 77, 147]],
         [0.5, [59, 130, 246]],

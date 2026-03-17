@@ -232,17 +232,30 @@ export function ReplayMap({
     }
 
     if (autoFollow) {
-      const next = model.points[Math.min(currentIdx + 1, model.points.length - 1)] ?? currentPoint;
-      const bearing = Math.atan2(next.lon - currentPoint.lon, next.lat - currentPoint.lat) * 180 / Math.PI;
-      const duration = 120 / playbackSpeed; // 20ms overlap for gapless continuity
+      // Calculate bearing with a smoothing window to prevent jitter
+      const windowSize = 10;
+      const targetIdx = Math.min(currentIdx + windowSize, model.points.length - 1);
+      const lookAheadPoint = model.points[targetIdx];
+      
+      const dLon = lookAheadPoint.lon - currentPoint.lon;
+      const dLat = lookAheadPoint.lat - currentPoint.lat;
+      const distSq = dLon * dLon + dLat * dLat;
+      
+      let bearing = map.getBearing();
+      // Only update bearing if moving a significant distance
+      if (distSq > 0.000000001) {
+        bearing = Math.atan2(dLon, dLat) * (180 / Math.PI);
+      }
+      
+      const duration = 100 / playbackSpeed;
       
       map.easeTo({
         center: [currentPoint.lon, currentPoint.lat],
-        bearing: Number.isFinite(bearing) ? bearing - 180 : map.getBearing(), // Compensate for coordinate order
+        bearing: bearing,
         pitch: model.payload.display.initialPitch,
         duration: duration,
         essential: true,
-        easing: (t) => t, // Linear easing for gapless glide
+        easing: (t) => t, 
       });
     }
   }, [autoFollow, currentIdx, currentPoint, model, playbackSpeed]);

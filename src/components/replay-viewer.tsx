@@ -76,37 +76,14 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
       .map((insight) => insight.id),
   );
 
-  // Calculate cumulative speed for running average
-  const runningAvgSpeeds = useMemo(() => {
-    let sum = 0;
-    const avgs = [0];
-    for (let i = 0; i < model.points.length; i++) {
-      sum += model.points[i].speedMps;
-      avgs.push(sum / (i + 1));
-    }
-    return avgs;
-  }, [model.points]);
-
-  // Calculate cumulative elevation gain for each point
-  const cumulativeGains = useMemo(() => {
-    let currentGain = 0;
-    const gains = [0];
-    for (let i = 1; i < model.points.length; i++) {
-      const diff = model.points[i].elevationM - (model.points[i - 1]?.elevationM || 0);
-      if (diff > 0) currentGain += diff;
-      gains.push(Math.round(currentGain));
-    }
-    return gains;
-  }, [model.points]);
-
   const maxElev = model.stats.maxElevationM;
   const isAtPeakElev = point.elevationM >= maxElev;
-  const currentGain = cumulativeGains[currentIdx];
+  const currentGain = point.cumulativeGainM;
 
   const maxSpeed = model.stats.maxSpeedMps;
   const minSpeed = model.stats.minSpeedMps;
   const isAtMaxSpeed = point.speedMps >= maxSpeed;
-  const avgSpeedProgress = runningAvgSpeeds[currentIdx];
+  const avgSpeedProgress = point.avgSpeedMps;
 
   const getGradeStyle = (grade: number) => {
     if (grade < 0) return { backgroundColor: 'rgba(34, 197, 94, 0.4)', border: '1px solid rgba(34, 197, 94, 0.5)' };
