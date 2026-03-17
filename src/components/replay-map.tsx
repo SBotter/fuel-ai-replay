@@ -232,17 +232,17 @@ export function ReplayMap({
     }
 
     if (autoFollow) {
-      const next = model.points[Math.min(currentIdx + 4, model.points.length - 1)] ?? currentPoint;
+      const next = model.points[Math.min(currentIdx + 1, model.points.length - 1)] ?? currentPoint;
       const bearing = Math.atan2(next.lon - currentPoint.lon, next.lat - currentPoint.lat) * 180 / Math.PI;
-      const duration = Math.max(150, 250 / playbackSpeed); // Match interval closely
+      const duration = 120 / playbackSpeed; // 20ms overlap for gapless continuity
       
       map.easeTo({
         center: [currentPoint.lon, currentPoint.lat],
-        bearing: Number.isFinite(bearing) ? bearing : map.getBearing(),
+        bearing: Number.isFinite(bearing) ? bearing - 180 : map.getBearing(), // Compensate for coordinate order
         pitch: model.payload.display.initialPitch,
         duration: duration,
         essential: true,
-        easing: (t) => t, // Linear easing for liquid smoothness
+        easing: (t) => t, // Linear easing for gapless glide
       });
     }
   }, [autoFollow, currentIdx, currentPoint, model, playbackSpeed]);

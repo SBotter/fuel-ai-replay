@@ -24,11 +24,15 @@ function severityClass(severity: string | undefined) {
 function Sparkline({ values, color, currentIndex }: { values: number[]; color: string; currentIndex: number }) {
   const width = 680;
   const height = 120;
-  const max = Math.max(...values, 1);
-  const min = Math.min(...values, 0);
+  const dataMin = Math.min(...values);
+  const dataMax = Math.max(...values);
+  const range = (dataMax - dataMin) || 1;
+  const padding = range * 0.1;
+  const min = dataMin - padding;
+  const max = dataMax + padding;
   const points = values.map((value, idx) => {
     const x = (idx / Math.max(values.length - 1, 1)) * width;
-    const y = height - ((value - min) / ((max - min) || 1)) * (height - 14) - 7;
+    const y = height - ((value - min) / (max - min)) * height;
     return `${x},${y}`;
   }).join(' ');
   const cursorX = (currentIndex / Math.max(values.length - 1, 1)) * width;
@@ -51,14 +55,15 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
 
   useEffect(() => {
     if (!playing) return;
-    const intervalMs = Math.max(50, 250 / playbackSpeed);
+    const intervalMs = 100; // Fixed 10fps for liquid smoothness
     const id = window.setInterval(() => {
       setCurrentIdx((value) => {
-        if (value >= model.points.length - 1) {
+        const next = value + Math.round(playbackSpeed);
+        if (next >= model.points.length - 1) {
           setPlaying(false);
-          return value;
+          return model.points.length - 1;
         }
-        return value + 1;
+        return next;
       });
     }, intervalMs);
     return () => window.clearInterval(id);
