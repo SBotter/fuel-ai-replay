@@ -45,11 +45,13 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
   const model: NormalizedReplayModel = useMemo(() => normalizeReplayPayload(payload), [payload]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [autoFollow, setAutoFollow] = useState(true);
   const [mode, setMode] = useState<ReplayMode>(payload.display.defaultMode);
 
   useEffect(() => {
     if (!playing) return;
+    const intervalMs = Math.max(50, 250 / playbackSpeed);
     const id = window.setInterval(() => {
       setCurrentIdx((value) => {
         if (value >= model.points.length - 1) {
@@ -58,9 +60,9 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
         }
         return value + 1;
       });
-    }, 120);
+    }, intervalMs);
     return () => window.clearInterval(id);
-  }, [playing, model.points.length]);
+  }, [playing, model.points.length, playbackSpeed]);
 
   const point = model.points[currentIdx] ?? model.points[0];
   const relatedInsightIds = new Set(
@@ -76,16 +78,27 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
           <div className="map-topbar">
             <div>
               <div className="metric-label">{payload.activity.sportType}</div>
-              <div style={{ fontSize: 28, fontWeight: 900 }}>{payload.activity.name}</div>
+              <div style={{ fontSize: 24, fontWeight: 900 }}>{payload.activity.name}</div>
               <div className="footer-note">{new Date(payload.activity.startDate).toLocaleString()}</div>
             </div>
             <div className="control-row">
+              <div className="flex gap-1 bg-black/20 p-1 rounded-lg mr-2">
+                {[1, 2, 4].map((s) => (
+                  <button 
+                    key={s} 
+                    onClick={() => setPlaybackSpeed(s)}
+                    className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${playbackSpeed === s ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    {s}x
+                  </button>
+                ))}
+              </div>
               <button className={`control-btn ${playing ? '' : 'primary'}`} onClick={() => setPlaying((v) => !v)}>
                 {playing ? 'Pause' : 'Play'}
               </button>
               <button className="control-btn" onClick={() => setCurrentIdx(0)}>Start</button>
               <button className="control-btn" onClick={() => setAutoFollow((v) => !v)}>
-                {autoFollow ? 'Auto camera on' : 'Auto camera off'}
+                {autoFollow ? 'Focus' : 'Orbit'}
               </button>
             </div>
           </div>

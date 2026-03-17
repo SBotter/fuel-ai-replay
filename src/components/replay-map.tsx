@@ -78,8 +78,17 @@ export function ReplayMap({
         tileSize: 512,
         maxzoom: 14,
       });
-      map.setTerrain({ source: TERRAIN_SOURCE_ID, exaggeration: 1.35 });
-      map.setFog({ color: 'rgb(5, 15, 35)', 'high-color': 'rgb(11, 31, 66)', 'space-color': 'rgb(3, 11, 24)' });
+      map.addLayer({
+        id: 'sky',
+        type: 'sky',
+        paint: {
+          'sky-type': 'atmosphere',
+          'sky-atmosphere-sun': [0.0, 0.0],
+          'sky-atmosphere-sun-intensity': 15,
+        },
+      });
+      map.setTerrain({ source: TERRAIN_SOURCE_ID, exaggeration: 1.5 });
+      map.setFog({ color: 'rgb(5, 15, 35)', 'high-color': 'rgb(11, 31, 66)', 'space-color': 'rgb(3, 11, 24)', 'horizon-blend': 0.05 });
 
       map.addSource(ROUTE_SOURCE_ID, { type: 'geojson', data: routeGeoJson });
       map.addLayer({
