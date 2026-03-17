@@ -27,6 +27,8 @@ export const ReplaySampleSchema = z.object({
   isLowest: z.boolean().optional(),
   glycogenRemainingG: z.number().optional(),
   heartRateBpm: z.number().optional(),
+  cumulativeGainM: z.number().optional(),
+  timestamp: z.number().optional(),
 });
 
 export const ReplaySegmentSchema = z.object({
@@ -136,8 +138,12 @@ export function ensureSamples(payload: ReplayPayload): ReplaySample[] {
     return payload.samples.map((s, idx) => {
       // Robust detection: Array = Compact Format, Object = Legacy Format
       if (Array.isArray(s) && s.length >= 7) {
-        // [lat, lon, elev, speed, grade, elapsed, dist, effort, fuel, flags, hr, glycogen]
-        const [lat, lon, elevationM, speedMps, gradePct, elapsedS, distanceM, effortScore, fuelRisk, flags, heartRateBpm, glycogenRemainingG] = s;
+        // [lat, lon, elev, speed, grade, elapsed, dist, effort, fuel, flags, hr, glycogen, gain, ts]
+        const [
+          lat, lon, elevationM, speedMps, gradePct, 
+          elapsedS, distanceM, effortScore, fuelRisk, flags, 
+          heartRateBpm, glycogenRemainingG, cumulativeGainM, timestamp
+        ] = s;
         return {
           idx,
           lat, lon, 
@@ -151,7 +157,9 @@ export function ensureSamples(payload: ReplayPayload): ReplaySample[] {
           isPeak: (flags & 1) !== 0,
           isLowest: (flags & 2) !== 0,
           heartRateBpm: heartRateBpm ?? 0,
-          glycogenRemainingG: glycogenRemainingG ?? (500 * (1 - (fuelRisk ?? 0))), // Fallback estimate
+          glycogenRemainingG: glycogenRemainingG ?? (500 * (1 - (fuelRisk ?? 0))),
+          cumulativeGainM: cumulativeGainM ?? 0,
+          timestamp: timestamp ?? 0,
         } as ReplaySample;
       }
       

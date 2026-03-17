@@ -150,7 +150,7 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
               onChange={(e) => setCurrentIdx(Number(e.target.value))}
             />
             <div className="footer-note">
-              {formatTime(point.elapsedS)} elapsed · {formatDistance(point.distanceM)} covered
+              {point.timestamp > 0 ? new Date(point.timestamp).toLocaleTimeString() : formatTime(point.elapsedS)} · {formatTime(point.elapsedS)} elapsed · {formatDistance(point.distanceM)} covered
             </div>
           </div>
 
@@ -179,6 +179,15 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
               <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
                 Gain: <span className="text-emerald-400">{currentGain}m</span>
               </div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-label">Heart Rate</div>
+              <div className="metric-value">{point.heartRateBpm ?? '—'} <span className="text-sm font-normal text-slate-400">bpm</span></div>
+            </div>
+            <div className="metric-card bg-red-900/10 border-red-900/20">
+              <div className="metric-label text-red-400">Suffer Score</div>
+              <div className="metric-value text-red-500">{point.intensityScore}</div>
+              <div className="text-[9px] uppercase font-black text-red-600/60 mt-1">Intensity Level</div>
             </div>
             <div className="metric-card"><div className="metric-label">Fuel risk</div><div className="metric-value">{Math.round(point.fuelRisk * 100)}%</div></div>
             <div className="metric-card"><div className="metric-label">Glycogen left</div><div className="metric-value">{point.glycogenRemainingG?.toFixed(0) ?? '—'} g</div></div>
@@ -216,6 +225,14 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
               <div>
                 <div className="metric-label">Speed</div>
                 <Sparkline values={model.points.map((p) => p.speedMps * 3.6)} color="#f97316" currentIndex={currentIdx} />
+              </div>
+              <div>
+                <div className="metric-label">Heart Rate</div>
+                <Sparkline values={model.points.map((p) => p.heartRateBpm ?? 0)} color="#ec4899" currentIndex={currentIdx} />
+              </div>
+              <div>
+                <div className="metric-label">Glycogen (g)</div>
+                <Sparkline values={model.points.map((p) => p.glycogenRemainingG ?? 0)} color="#22c55e" currentIndex={currentIdx} />
               </div>
               <div>
                 <div className="metric-label">Fuel risk</div>

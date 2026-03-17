@@ -10,6 +10,8 @@ export type NormalizedReplayPoint = ReplaySample & {
   colorHeartRate: string;
   cumulativeGainM: number;
   avgSpeedMps: number;
+  intensityScore: number;
+  timestamp: number;
 };
 
 export type NormalizedReplayModel = {
@@ -125,12 +127,17 @@ export function normalizeReplayPayload(payload: ReplayPayload): NormalizedReplay
       ? 0.5 + 0.5 * clamp01(gradeValue / (maxGrade || 1))
       : 0.5 - 0.5 * clamp01(Math.abs(gradeValue) / (Math.abs(minGrade) || 1));
 
+    // Intensity (Suffer Score) = Combined Effort + Grade Factor
+    const intensityScore = Math.min(100, Math.round((effortT * 60) + (Math.max(0, gradeValue) * 4)));
+
     return {
       ...sample,
       idx,
       progress: clamp01((sample.distanceM ?? idx) / maxDistance),
       cumulativeGainM: Math.round(runningGain),
       avgSpeedMps: runningSpeedSum / (idx + 1),
+      intensityScore,
+      timestamp: sample.timestamp ?? 0,
       colorSpeed: blend([
         [0, [14, 77, 147]],
         [0.5, [59, 130, 246]],
