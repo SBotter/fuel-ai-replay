@@ -47,7 +47,7 @@ export function ReplayMap({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
-  const accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+  const accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const currentPoint = model.points[Math.max(0, Math.min(currentIdx, model.points.length - 1))];
 
   const routeGeoJson = useMemo(() => buildRouteSegments(model, mode), [model, mode]);
