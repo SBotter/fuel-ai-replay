@@ -135,7 +135,7 @@ export function ReplayMap({
       map.remove();
       mapRef.current = null;
     };
-  }, [accessToken, currentPoint.lat, currentPoint.lon, model]);
+  }, [accessToken, model]);
 
   useEffect(() => {
     const map = mapRef.current;
