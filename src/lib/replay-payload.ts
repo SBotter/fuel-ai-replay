@@ -23,10 +23,6 @@ export const ReplaySampleSchema = z.object({
   gradePct: z.number().default(0),
   effortScore: z.number().min(0).max(1).default(0),
   fuelRisk: z.number().min(0).max(1).default(0),
-  glycogenRemainingG: z.number().nonnegative().optional(),
-  heartRateBpm: z.number().positive().optional(),
-  cadenceRpm: z.number().nonnegative().optional(),
-  powerWatts: z.number().nonnegative().optional(),
   isPeak: z.boolean().optional(),
   isLowest: z.boolean().optional(),
 });
@@ -51,6 +47,8 @@ export const ReplayInsightSchema = z.object({
   segmentId: z.string().optional(),
   severity: z.enum(['info', 'warning', 'critical']).default('info'),
 });
+
+export const CompactSampleSchema = z.array(z.number());
 
 export const ReplayPayloadSchema = z.object({
   version: z.string().default('1.0'),
@@ -101,7 +99,7 @@ export const ReplayPayloadSchema = z.object({
     initialBearing: 0,
     initialZoom: 12.5,
   }),
-  samples: z.array(ReplaySampleSchema).optional(),
+  samples: z.array(z.union([ReplaySampleSchema, CompactSampleSchema])).optional(),
   segments: z.array(ReplaySegmentSchema).default([]),
   insights: z.array(ReplayInsightSchema).default([]),
   source: z.object({
@@ -132,8 +130,21 @@ export function decodePolylineToSamples(routePolyline: string): ReplaySample[] {
 }
 
 export function ensureSamples(payload: ReplayPayload): ReplaySample[] {
-  if (payload.samples && payload.samples.length > 1) {
-    return payload.samples.map((sample, idx) => ({ ...sample, idx: sample.idx ?? idx }));
+  if (payload.samples && payload.samples.length > 0) {
+    return payload.samples.map((s, idx) => {
+      if (Array.isArray(s)) {
+        // Decompress: [lat, lon, elev, speed, grade, elapsed, dist, effort, fuel, flags]
+        const [lat, lon, elevationM, speedMps, gradePct, elapsedS, distanceM, effortScore, fuelRisk, flags] = s;
+        return {
+          idx,
+          lat, lon, elevationM, speedMps, gradePct,
+          elapsedS, distanceM, effortScore, fuelRisk,
+          isPeak: (flags & 1) !== 0,
+          isLowest: (flags & 2) !== 0,
+        } as ReplaySample;
+      }
+      return { ...s, idx: s.idx ?? idx };
+    });
   }
 
   if (payload.activity.routePolyline) {
