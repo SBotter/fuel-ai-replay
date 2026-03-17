@@ -39,11 +39,13 @@ export function ReplayMap({
   mode,
   currentIdx,
   autoFollow,
+  playbackSpeed = 1,
 }: {
   model: NormalizedReplayModel;
   mode: ReplayMode;
   currentIdx: number;
   autoFollow: boolean;
+  playbackSpeed?: number;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
@@ -60,7 +62,7 @@ export function ReplayMap({
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
+      style: 'mapbox://styles/mapbox/satellite-streets-v12',
       center: [currentPoint.lon, currentPoint.lat],
       zoom: model.payload.display.initialZoom,
       pitch: model.payload.display.initialPitch,
@@ -88,7 +90,12 @@ export function ReplayMap({
         },
       });
       map.setTerrain({ source: TERRAIN_SOURCE_ID, exaggeration: 1.5 });
-      map.setFog({ color: 'rgb(5, 15, 35)', 'high-color': 'rgb(11, 31, 66)', 'space-color': 'rgb(3, 11, 24)', 'horizon-blend': 0.05 });
+      map.setFog({ 
+        'color': 'rgba(255, 255, 255, 0.4)', 
+        'high-color': 'rgba(200, 230, 255, 0.7)', 
+        'space-color': 'rgb(11, 11, 25)', 
+        'horizon-blend': 0.1 
+      });
 
       map.addSource(ROUTE_SOURCE_ID, { type: 'geojson', data: routeGeoJson });
       map.addLayer({
@@ -97,8 +104,8 @@ export function ReplayMap({
         source: ROUTE_SOURCE_ID,
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': 10,
-          'line-opacity': 0.18,
+          'line-width': 12,
+          'line-opacity': 0.4,
         },
       });
       map.addLayer({
@@ -107,8 +114,8 @@ export function ReplayMap({
         source: ROUTE_SOURCE_ID,
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': 5,
-          'line-opacity': 0.95,
+          'line-width': 6,
+          'line-opacity': 1.0,
         },
       });
 
@@ -177,15 +184,18 @@ export function ReplayMap({
     if (autoFollow) {
       const next = model.points[Math.min(currentIdx + 8, model.points.length - 1)] ?? currentPoint;
       const bearing = Math.atan2(next.lon - currentPoint.lon, next.lat - currentPoint.lat) * 180 / Math.PI;
+      const duration = Math.max(100, 250 / playbackSpeed); // Sync with playback interval
+      
       map.easeTo({
         center: [currentPoint.lon, currentPoint.lat],
         bearing: Number.isFinite(bearing) ? bearing : map.getBearing(),
         pitch: model.payload.display.initialPitch,
-        duration: 220,
+        duration: duration,
         essential: true,
+        easing: (t) => t, // Linear easing for continuous data stream
       });
     }
-  }, [autoFollow, currentIdx, currentPoint, model]);
+  }, [autoFollow, currentIdx, currentPoint, model, playbackSpeed]);
 
   if (!accessToken) {
     return (

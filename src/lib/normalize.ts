@@ -18,6 +18,7 @@ export type NormalizedReplayModel = {
     maxElevationM: number;
     minElevationM: number;
     maxSpeedMps: number;
+    minSpeedMps: number;
     maxGradePct: number;
     minGradePct: number;
     maxFuelRisk: number;
@@ -158,6 +159,7 @@ export function normalizeReplayPayload(payload: ReplayPayload): NormalizedReplay
       maxElevationM: maxElevation,
       minElevationM: minElevation,
       maxSpeedMps: maxSpeed,
+      minSpeedMps: Math.min(...samples.map((s) => s.speedMps ?? 0)),
       maxGradePct: maxGrade,
       minGradePct: minGrade,
       maxFuelRisk,
