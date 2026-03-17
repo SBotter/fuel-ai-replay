@@ -156,9 +156,9 @@ export function normalizeReplayPayload(payload: ReplayPayload): NormalizedReplay
     points,
     bounds: [[minLon, minLat], [maxLon, maxLat]],
     stats: {
-      maxElevationM: maxElevation,
+      maxElevationM: payload.activity.maxElevationM ?? maxElevation,
       minElevationM: minElevation,
-      maxSpeedMps: maxSpeed,
+      maxSpeedMps: payload.activity.maxSpeedMps ?? maxSpeed,
       minSpeedMps: Math.min(...samples.map((s) => s.speedMps ?? 0)),
       maxGradePct: maxGrade,
       minGradePct: minGrade,

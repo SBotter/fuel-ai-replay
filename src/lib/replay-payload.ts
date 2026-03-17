@@ -27,6 +27,8 @@ export const ReplaySampleSchema = z.object({
   heartRateBpm: z.number().positive().optional(),
   cadenceRpm: z.number().nonnegative().optional(),
   powerWatts: z.number().nonnegative().optional(),
+  isPeak: z.boolean().optional(),
+  isLowest: z.boolean().optional(),
 });
 
 export const ReplaySegmentSchema = z.object({
@@ -69,6 +71,7 @@ export const ReplayPayloadSchema = z.object({
     averageHeartRateBpm: z.number().positive().optional(),
     maxHeartRateBpm: z.number().positive().optional(),
     routePolyline: z.string().optional(),
+    maxElevationM: z.number().nonnegative().optional(),
   }),
   athlete: z.object({
     id: z.string().optional(),

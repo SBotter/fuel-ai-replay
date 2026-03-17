@@ -87,7 +87,7 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
     let currentGain = 0;
     const gains = [0];
     for (let i = 1; i < model.points.length; i++) {
-      const diff = model.points[i].elevationM - model.points[i - 1].elevationM;
+      const diff = model.points[i].elevationM - (model.points[i - 1]?.elevationM || 0);
       if (diff > 0) currentGain += diff;
       gains.push(Math.round(currentGain));
     }
@@ -105,7 +105,7 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
 
   const getGradeStyle = (grade: number) => {
     if (grade < 0) return { backgroundColor: 'rgba(34, 197, 94, 0.4)', border: '1px solid rgba(34, 197, 94, 0.5)' };
-    if (grade < 5) return { backgroundColor: 'rgba(234, 179, 8, 0.4)', border: '1px solid rgba(234, 179, 8, 0.5)' };
+    if (grade < 5) return { backgroundColor: 'rgba(234, 179, 8, 0.2)', border: '1px solid rgba(234, 179, 8, 0.3)' };
     if (grade < 10) return { backgroundColor: 'rgba(240, 128, 128, 0.4)', border: '1px solid rgba(240, 128, 128, 0.5)' };
     return { backgroundColor: 'rgba(220, 38, 38, 0.6)', border: '1px solid rgba(220, 38, 38, 0.8)' };
   };
@@ -113,14 +113,17 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
   return (
     <main className="page-shell">
       <style>{`
-        @keyframes blink-peak {
-          0%, 100% { background-color: rgba(220, 38, 38, 0.6); border-color: rgba(220, 38, 38, 0.8); }
-          50% { background-color: rgba(239, 68, 68, 0.9); border-color: #fff; transform: scale(1.02); }
+        @keyframes pulse-once {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+          50% { transform: scale(1.03); box-shadow: 0 0 20px 5px rgba(239, 68, 68, 0.3); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        .peak-blink {
-          animation: blink-peak 0.8s infinite ease-in-out;
-          box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
-          z-index: 10;
+        .peak-glow {
+          background-color: rgba(220, 38, 38, 0.6) !important;
+          border-color: rgba(255, 255, 255, 0.5) !important;
+        }
+        .animate-peak {
+           animation: pulse-once 1.2s ease-out 1;
         }
       `}</style>
       <div className="replay-layout">
@@ -128,7 +131,7 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
           <div className="map-topbar">
             <div>
               <div className="metric-label">{payload.activity.sportType}</div>
-              <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1.1 }}>{payload.activity.name}</div>
+              <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1.1 }}>{payload.activity.name}</div>
               <div className="footer-note">{new Date(payload.activity.startDate).toLocaleString()}</div>
             </div>
             <div className="control-row">
@@ -170,10 +173,10 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
           </div>
 
           <div className="metrics-row">
-            <div className={`metric-card transition-all ${isAtMaxSpeed ? 'peak-blink' : ''}`}>
+            <div className={`metric-card transition-all ${isAtMaxSpeed ? 'peak-glow' : ''}`}>
               <div className="flex justify-between items-start">
                 <div className="metric-label">Speed</div>
-                {isAtMaxSpeed && <div className="text-[9px] font-black uppercase text-white bg-red-600 px-1.5 rounded animate-pulse">Max Speed</div>}
+                {isAtMaxSpeed && <div className="text-[9px] font-black uppercase text-white bg-red-600 px-1.5 rounded">Max: {formatSpeed(maxSpeed)}</div>}
               </div>
               <div className="metric-value">{formatSpeed(point.speedMps)}</div>
               <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter flex justify-between">
@@ -185,10 +188,10 @@ export function ReplayViewer({ payload }: { payload: ReplayPayload }) {
               <div className="metric-label">Grade</div>
               <div className="metric-value">{point.gradePct.toFixed(1)}%</div>
             </div>
-            <div className={`metric-card transition-all ${isAtPeakElev ? 'peak-blink' : ''}`}>
+            <div key={point.isPeak ? 'peak' : 'norm'} className={`metric-card transition-all ${point.isPeak ? 'peak-glow animate-peak' : ''}`}>
               <div className="flex justify-between items-start">
                 <div className="metric-label">Elevation</div>
-                {isAtPeakElev && <div className="text-[9px] font-black uppercase text-white bg-red-600 px-1.5 rounded animate-pulse">Higher Point</div>}
+                {point.isPeak && <div className="text-[9px] font-black uppercase text-white bg-red-600 px-1.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.5)]">Higher Point: {point.elevationM.toFixed(0)}m</div>}
               </div>
               <div className="metric-value">{point.elevationM.toFixed(0)} m</div>
               <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">

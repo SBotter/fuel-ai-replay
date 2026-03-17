@@ -119,6 +119,56 @@ export function ReplayMap({
         },
       });
 
+      const peakPoint = model.points.find(p => p.isPeak);
+      if (peakPoint) {
+        map.addSource('peak-point', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [peakPoint.lon, peakPoint.lat] },
+            properties: { altitude: peakPoint.elevationM },
+          },
+        });
+        map.addLayer({
+          id: 'peak-marker', type: 'circle', source: 'peak-point',
+          paint: { 'circle-radius': 10, 'circle-color': '#ef4444', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 },
+        });
+        map.addLayer({
+          id: 'peak-label', type: 'symbol', source: 'peak-point',
+          layout: {
+            'text-field': ['concat', 'HIGHEST POINT: ', ['get', 'altitude'], 'm'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            'text-offset': [0, -1.8], 'text-anchor': 'bottom', 'text-size': 11,
+          },
+          paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0,0,0,0.8)', 'text-halo-width': 2 },
+        });
+      }
+
+      const lowPoint = model.points.find(p => p.isLowest);
+      if (lowPoint) {
+        map.addSource('low-point', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [lowPoint.lon, lowPoint.lat] },
+            properties: { altitude: lowPoint.elevationM },
+          },
+        });
+        map.addLayer({
+          id: 'low-marker', type: 'circle', source: 'low-point',
+          paint: { 'circle-radius': 10, 'circle-color': '#3b82f6', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 },
+        });
+        map.addLayer({
+          id: 'low-label', type: 'symbol', source: 'low-point',
+          layout: {
+            'text-field': ['concat', 'LOWEST POINT: ', ['get', 'altitude'], 'm'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            'text-offset': [0, 1.8], 'text-anchor': 'top', 'text-size': 11,
+          },
+          paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0,0,0,0.8)', 'text-halo-width': 2 },
+        });
+      }
+
       map.addSource(POINT_SOURCE_ID, {
         type: 'geojson',
         data: {
@@ -182,9 +232,9 @@ export function ReplayMap({
     }
 
     if (autoFollow) {
-      const next = model.points[Math.min(currentIdx + 8, model.points.length - 1)] ?? currentPoint;
+      const next = model.points[Math.min(currentIdx + 4, model.points.length - 1)] ?? currentPoint;
       const bearing = Math.atan2(next.lon - currentPoint.lon, next.lat - currentPoint.lat) * 180 / Math.PI;
-      const duration = Math.max(100, 250 / playbackSpeed); // Sync with playback interval
+      const duration = Math.max(150, 250 / playbackSpeed); // Match interval closely
       
       map.easeTo({
         center: [currentPoint.lon, currentPoint.lat],
@@ -192,7 +242,7 @@ export function ReplayMap({
         pitch: model.payload.display.initialPitch,
         duration: duration,
         essential: true,
-        easing: (t) => t, // Linear easing for continuous data stream
+        easing: (t) => t, // Linear easing for liquid smoothness
       });
     }
   }, [autoFollow, currentIdx, currentPoint, model, playbackSpeed]);
