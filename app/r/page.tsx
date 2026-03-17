@@ -1,5 +1,7 @@
 import { ReplayViewer } from '@/components/replay-viewer';
 import { ReplayPayloadSchema, type ReplayPayload } from '@/lib/replay-payload';
+ 
+export const dynamic = 'force-dynamic';
 
 async function loadPayload(searchParams: Promise<Record<string, string | string[] | undefined>>): Promise<ReplayPayload> {
   const params = await searchParams;
